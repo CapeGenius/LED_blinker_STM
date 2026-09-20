@@ -74,6 +74,9 @@ int main(void)
 	RCC_AHB1_EN |= (1U << 2);
 	RCC_APB2_EN |= (1U << 14);
 
+	//set up GPIO_A pin
+
+
 	// set up GPIO_C pin
 	GPIO_C_MODER &= ~(3U<< 26);
 	GPIO_C_MODER |= (1U<< 26);
@@ -94,5 +97,13 @@ int main(void)
 
     /* Loop forever */
 	while (1) {
+		switch(press_counter) {
+		case 0:
+			puts("hello");
+		case 1:
+			puts("hey");
+		case 2:
+			puts("what's up");
+		}
 	}
 }

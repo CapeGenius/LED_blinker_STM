@@ -64,7 +64,8 @@
 
 // define GPIO A registers
 #define GPIO_A_MODER	(*(volatile uint32_t*) GPIO_A)
-#define GPIO_A_BSRR		(*(volatile uint32_t*) GPIO_A + 0x18)
+#define GPIO_A_BSRR		(*(volatile uint32_t*) GPIO_A + 0x14)
+#define GPIO_A_ODR		(*(volatile uint32_t*) GPIO_A + 0x18)
 
 // define GPIO B registers
 #define GPIO_B_MODER	(*(volatile uint32_t*) GPIO_B)
@@ -109,8 +110,25 @@ void EXTI15_10_IRQHandler(void) {
 	}
 }
 
-void toggle_LD2(void) {
+void turn_LD2_off(void) {
+	GPIO_A_BSRR |= (0x1U << 21); // resets the bit at LD2
+}
 
+void turn_LD2_on(void) {
+	GPIO_A_BSRR |= (0x1U << 5); //sets the bit
+}
+
+void toggle_LD2(void) {
+	// if the value at the LEDregister is 1 --> resets the bit
+
+	if (press_counter == 2) {
+		if (GPIO_A_ODR & (0x1U<<5)) {
+			turn_LD2_off();
+		}
+		else { //if the value at the LED register is 0 --> sets the bit
+			turn_LD2_on();
+		}
+	}
 }
 
 void TIM8_BRK_TIM12_IRQHandler(void){
@@ -118,8 +136,10 @@ void TIM8_BRK_TIM12_IRQHandler(void){
 		timer_counter = (timer_counter + 1) % 3;
 
 		if (timer_counter == 999) {
-
+			toggle_LD2();
 		}
+
+		NVIC_ICPR_1 |= (1U << 11);
 
 	}
 }
@@ -198,6 +218,7 @@ int main(void)
 	// begin setup
 	RCC_setup();
 	// resetting BR5 register
+	GPIO_A_BSRR |= (0x1U << 5);
 	GPIO_A_setup();
 	GPIO_B_setup();
 	GPIO_C_setup();
@@ -209,11 +230,11 @@ int main(void)
 	while (1) {
 		switch(press_counter) {
 		case 0:
-			puts("hello");
+			turn_LD2_off();
 		case 1:
-			puts("hey");
+			turn_LD2_on();
 		case 2:
-			puts("what's up");
+			continue;
 		}
 	}
 }

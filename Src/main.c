@@ -65,8 +65,8 @@
 
 // define GPIO A registers
 #define GPIO_A_MODER	(*(volatile uint32_t*) GPIO_A)
-#define GPIO_A_BSRR		(*(volatile uint32_t*) (GPIO_A + 0x14))
-#define GPIO_A_ODR		(*(volatile uint32_t*) (GPIO_A + 0x18))
+#define GPIO_A_BSRR		(*(volatile uint32_t*) (GPIO_A + 0x18))
+#define GPIO_A_ODR		(*(volatile uint32_t*) (GPIO_A + 0x14))
 
 // define GPIO B registers
 #define GPIO_B_MODER	(*(volatile uint32_t*) GPIO_B)
@@ -113,11 +113,11 @@ void EXTI15_10_IRQHandler(void) {
 }
 
 void turn_LD2_off(void) {
-	GPIO_A_BSRR |= (0x1U << 21);
+	GPIO_A_BSRR |= (0x1U << 21); // resets the bit at LD2
 }
 
 void turn_LD2_on(void) {
-	GPIO_A_BSRR |= (0x1U << 5);
+	GPIO_A_BSRR |= (0x1U << 5); //sets the bit
 }
 
 void toggle_LD2(void) {

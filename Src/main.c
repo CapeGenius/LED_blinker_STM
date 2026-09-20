@@ -26,9 +26,16 @@
 #define GPIO_A				0x40020000
 #define GPIO_C 				0x40020800
 #define SYSCFG 				0x40013800
+
+// define timers and RCC
 #define RCC 				0x40023800
+#define TIM12				0x40001800
+
+// define EXTI and NVIC values
 #define EXTI 				0x40013C00
 #define NVIC_ISER_0			0xE000E000
+
+// define offsets
 #define RCC_AHB1_ENR_offset 0x30
 #define RCC_APB2_ENR_offset 0x44
 #define EXTI_IMR_offset 	0x0
@@ -37,13 +44,25 @@
 #define NVIC_ISER_1_offset	(0x100 + 0x04)
 #define EXTI_PR_offset		0x14
 
-// define GPIO registers
-#define GPIO_A_MODER	(*(volatile uint32_t*) GPIO_A)
 
+// define timer offsets
+#define TIM12_CR1			0x00
+#define TIM12_DIER			0x0C
+#define TIM12_SR			0x10
+#define TIM12_CNT			0x24
+#define TIM12_PSC			0x28
+#define TIM12_ARR			0x2C
+
+// define GPIO A registers
+#define GPIO_A_MODER	(*(volatile uint32_t*) GPIO_A)
+#define GPIO_A_BSRR		(*(volatile uint32_t*) GPIO_A + 0x18)
+
+// define GPIO C registers
 #define GPIO_C_MODER 	(*(volatile uint32_t*) GPIO_C)
 #define GPIO_C_PUPDR 	(*(volatile uint32_t*) (GPIO_C + 0x0C))
 #define GPIO_C_IDR   	(*(volatile uint32_t*) (GPIO_C + 0x10))
 
+// define EXTI
 #define SYSCFG_EXTICR4	(*(volatile uint32_t*) (SYSCFG + 0x14))
 #define EXTI15_10 		(*(volatile uint32_t*) 0x000000E0)
 #define EXTI_IMR 		(*(volatile uint32_t*) (EXTI + EXTI_IMR_offset))
@@ -51,9 +70,14 @@
 #define EXTI_FTSR		(*(volatile uint32_t*) (EXTI + EXTI_FTSR_offset))
 #define NVIC_ISER_1		(*(volatile uint32_t*) (NVIC_ISER_0 + NVIC_ISER_1_offset))
 
+// define RCC
 #define RCC_AHB1_EN 	(*(volatile uint32_t*) (RCC+RCC_AHB1_ENR_offset))
 #define RCC_APB2_EN 	(*(volatile uint32_t*) (RCC+RCC_APB2_ENR_offset))
 #define EXTI_PR			(*(volatile uint32_t*) (EXTI + EXTI_PR_offset))
+
+// define Timer
+
+
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
@@ -67,23 +91,33 @@ void EXTI15_10_IRQHandler(void) {
 	}
 }
 
-int main(void)
-{
-
-	// turn on RCC for button
-	RCC_AHB1_EN |= (1U << 2);
-	RCC_APB2_EN |= (1U << 14);
-
-	//set up GPIO_A pin
-
-
+void GPIO_C_setup(void) {
 	// set up GPIO_C pin
 	GPIO_C_MODER &= ~(3U<< 26);
 	GPIO_C_MODER |= (1U<< 26);
 
 	// set up input mode for the GPIOC, pin 13
 	GPIO_C_PUPDR |= (1U << 26);
+}
 
+// turn on RCC
+void RCC_setup(void) {
+	// turn on RCC for button and LED
+	RCC_AHB1_EN |= (1U << 2);
+	RCC_AHB1_EN |= (1U << 0);
+
+	//enable RCC for SYSCFG
+	RCC_APB2_EN |= (1U << 14);
+}
+
+void GPIO_A_setup(void) {
+
+	//set up GPIO_A pin for LED
+	GPIO_A_MODER &= ~(3U<<10);
+	GPIO_A_MODER |= (1U<<10);
+}
+
+void setup_NVIC_EXTI(void) {
 	// configure EXTI line
 	EXTI_IMR |= (1U << 13);
 	EXTI_FTSR |= (1U << 13);
@@ -94,6 +128,17 @@ int main(void)
 
 	// set up NVIC
 	NVIC_ISER_1 |= (1U << 8);
+}
+
+int main(void)
+{
+	// begin setup
+	RCC_setup();
+	// resetting BR5 register
+	GPIO_A_setup();
+	GPIO_C_setup();
+	setup_NVIC_EXTI();
+
 
     /* Loop forever */
 	while (1) {

@@ -55,21 +55,21 @@
 #define TIM12_PSC_offset	0x28
 #define TIM12_ARR_offset	0x2C
 
-#define TIM12_CR1			(*(volatile uint32_t*) TIM12 + TIM12_CR1_offset)
-#define TIM12_DIER			(*(volatile uint32_t*) TIM12 + TIM12_DIER_offset)
-#define TIM12_SR			(*(volatile uint32_t*) TIM12 + TIM12_SR_offset)
-#define TIM12_CNT			(*(volatile uint32_t*) TIM12 + TIM12_CNT_offset)
-#define TIM12_PSC			(*(volatile uint32_t*) TIM12 + TIM12_PSC_offset)
-#define TIM12_ARR			(*(volatile uint32_t*) TIM12 + TIM12_ARR_offset)
+#define TIM12_CR1			(*(volatile uint32_t*) (TIM12 + TIM12_CR1_offset))
+#define TIM12_DIER			(*(volatile uint32_t*) (TIM12 + TIM12_DIER_offset))
+#define TIM12_SR			(*(volatile uint32_t*) (TIM12 + TIM12_SR_offset))
+#define TIM12_CNT			(*(volatile uint32_t*) (TIM12 + TIM12_CNT_offset))
+#define TIM12_PSC			(*(volatile uint32_t*) (TIM12 + TIM12_PSC_offset))
+#define TIM12_ARR			(*(volatile uint32_t*) (TIM12 + TIM12_ARR_offset))
 
 // define GPIO A registers
 #define GPIO_A_MODER	(*(volatile uint32_t*) GPIO_A)
-#define GPIO_A_BSRR		(*(volatile uint32_t*) GPIO_A + 0x14)
-#define GPIO_A_ODR		(*(volatile uint32_t*) GPIO_A + 0x18)
+#define GPIO_A_BSRR		(*(volatile uint32_t*) (GPIO_A + 0x14))
+#define GPIO_A_ODR		(*(volatile uint32_t*) (GPIO_A + 0x18))
 
 // define GPIO B registers
 #define GPIO_B_MODER	(*(volatile uint32_t*) GPIO_B)
-#define GPIO_B_AFRH 	(*(volatile uint32_t*) GPIO_B + 0x24)
+#define GPIO_B_AFRH 	(*(volatile uint32_t*) (GPIO_B + 0x24))
 
 // define GPIO C registers
 #define GPIO_C_MODER 	(*(volatile uint32_t*) GPIO_C)

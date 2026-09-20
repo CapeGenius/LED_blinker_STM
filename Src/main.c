@@ -133,7 +133,7 @@ void toggle_LD2(void) {
 
 void TIM8_BRK_TIM12_IRQHandler(void){
 	if (NVIC_ISPR_1 & (1U << 11)) {
-		timer_counter = (timer_counter + 1) % 3;
+		timer_counter = (timer_counter + 1) % 1000;
 
 		if (timer_counter == 999) {
 			toggle_LD2();
@@ -224,6 +224,7 @@ int main(void)
 	GPIO_C_setup();
 	setup_NVIC_EXTI();
 	TIM12_setup();
+	setup_NVIC_TIM12();
 
 
     /* Loop forever */

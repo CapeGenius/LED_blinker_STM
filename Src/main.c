@@ -38,6 +38,7 @@
 
 // define offsets
 #define RCC_AHB1_ENR_offset 0x30
+#define RCC_APB1_ENR_offset 0x40
 #define RCC_APB2_ENR_offset 0x44
 #define EXTI_IMR_offset 	0x0
 #define EXTI_RTSR_offset 	0x08
@@ -90,6 +91,7 @@
 
 
 // define RCC
+#define RCC_APB1_EN 	(*(volatile uint32_t*) (RCC+RCC_APB1_ENR_offset))
 #define RCC_AHB1_EN 	(*(volatile uint32_t*) (RCC+RCC_AHB1_ENR_offset))
 #define RCC_APB2_EN 	(*(volatile uint32_t*) (RCC+RCC_APB2_ENR_offset))
 #define EXTI_PR			(*(volatile uint32_t*) (EXTI + EXTI_PR_offset))
@@ -111,11 +113,11 @@ void EXTI15_10_IRQHandler(void) {
 }
 
 void turn_LD2_off(void) {
-	GPIO_A_BSRR |= (0x1U << 21); // resets the bit at LD2
+	GPIO_A_BSRR |= (0x1U << 21);
 }
 
 void turn_LD2_on(void) {
-	GPIO_A_BSRR |= (0x1U << 5); //sets the bit
+	GPIO_A_BSRR |= (0x1U << 5);
 }
 
 void toggle_LD2(void) {
@@ -132,10 +134,10 @@ void toggle_LD2(void) {
 }
 
 void TIM8_BRK_TIM12_IRQHandler(void){
-	if (NVIC_ISPR_1 & (1U << 11)) {
-		timer_counter = (timer_counter + 1) % 1000;
+	if (TIM12_SR & (1U << 0)) {
+		timer_counter = (timer_counter + 1) % 3;
 
-		if (timer_counter == 999) {
+		if (timer_counter == 2) {
 			toggle_LD2();
 		}
 
@@ -175,6 +177,9 @@ void RCC_setup(void) {
 	// turn on RCC for button and LED
 	RCC_AHB1_EN |= (1U << 2);
 	RCC_AHB1_EN |= (1U << 0);
+
+	// enable RCC for TIM12
+	RCC_APB1_EN |= (1U << 6);
 
 	//enable RCC for SYSCFG
 	RCC_APB2_EN |= (1U << 14);
@@ -227,16 +232,20 @@ int main(void)
 	TIM12_setup();
 	setup_NVIC_TIM12();
 
+	turn_LD2_off();
+	turn_LD2_on();
 
     /* Loop forever */
 	while (1) {
 		switch(press_counter) {
 		case 0:
 			turn_LD2_off();
+			break;
 		case 1:
 			turn_LD2_on();
+			break;
 		case 2:
-			continue;
+			break;
 		}
 	}
 }

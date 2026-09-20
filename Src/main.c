@@ -140,7 +140,7 @@ void TIM8_BRK_TIM12_IRQHandler(void){
 		}
 
 		NVIC_ICPR_1 |= (1U << 11);
-
+		TIM12_SR &= ~(1U << 0);
 	}
 }
 
@@ -165,7 +165,6 @@ void GPIO_B_setup(void) {
 void GPIO_C_setup(void) {
 	// set up GPIO_C pin
 	GPIO_C_MODER &= ~(3U<< 26);
-	GPIO_C_MODER |= (1U<< 26);
 
 	// set up input mode for the GPIOC, pin 13
 	GPIO_C_PUPDR |= (1U << 26);
@@ -181,8 +180,6 @@ void RCC_setup(void) {
 	RCC_APB2_EN |= (1U << 14);
 }
 
-
-
 void setup_NVIC_EXTI(void) {
 	// configure EXTI line
 	EXTI_IMR |= (1U << 13);
@@ -197,15 +194,19 @@ void setup_NVIC_EXTI(void) {
 }
 
 void TIM12_setup(void) {
-	// setup the control register
+	// clear the TIM12 control register
 	TIM12_CR1 &= ~(0x1U << 7);
+	TIM12_CR1 &= ~(0x1U << 0);
+
+	//set up TIM12 CR register
 	TIM12_CR1 |= (0x1U << 7);
+	TIM12_CR1 |= (0x1U << 0);
 
 	// set up the DIER
 	TIM12_DIER &= ~(0x1U << 0);
 	TIM12_DIER |= (0x1U << 0);
 	// we need to read from TIM12_SR to get update interrupt event
-	TIM12_PSC = 45000 - 1;
+	TIM12_PSC = 1600 - 1;
 	TIM12_ARR = 1000 - 1;
 }
 

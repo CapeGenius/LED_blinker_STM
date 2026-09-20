@@ -25,6 +25,7 @@
 // define GPIO values
 #define GPIO_A				0x40020000
 #define GPIO_C 				0x40020800
+#define GPIO_B				0x40020400
 #define SYSCFG 				0x40013800
 
 // define timers and RCC
@@ -46,16 +47,27 @@
 
 
 // define timer offsets
-#define TIM12_CR1			0x00
-#define TIM12_DIER			0x0C
-#define TIM12_SR			0x10
-#define TIM12_CNT			0x24
-#define TIM12_PSC			0x28
-#define TIM12_ARR			0x2C
+#define TIM12_CR1_offset	0x00
+#define TIM12_DIER_offset	0x0C
+#define TIM12_SR_offset		0x10
+#define TIM12_CNT_offset	0x24
+#define TIM12_PSC_offset	0x28
+#define TIM12_ARR_offset	0x2C
+
+#define TIM12_CR1			(*(volatile uint32_t*) TIM12 + TIM12_CR1_offset)
+#define TIM12_DIER			(*(volatile uint32_t*) TIM12 + TIM12_DIER_offset)
+#define TIM12_SR			(*(volatile uint32_t*) TIM12 + TIM12_SR_offset)
+#define TIM12_CNT			(*(volatile uint32_t*) TIM12 + TIM12_CNT_offset)
+#define TIM12_PSC			(*(volatile uint32_t*) TIM12 + TIM12_PSC_offset)
+#define TIM12_ARR			(*(volatile uint32_t*) TIM12 + TIM12_ARR_offset)
 
 // define GPIO A registers
 #define GPIO_A_MODER	(*(volatile uint32_t*) GPIO_A)
 #define GPIO_A_BSRR		(*(volatile uint32_t*) GPIO_A + 0x18)
+
+// define GPIO B registers
+#define GPIO_B_MODER	(*(volatile uint32_t*) GPIO_B)
+#define GPIO_B_AFRH 	(*(volatile uint32_t*) GPIO_B + 0x24)
 
 // define GPIO C registers
 #define GPIO_C_MODER 	(*(volatile uint32_t*) GPIO_C)
@@ -75,7 +87,6 @@
 #define RCC_APB2_EN 	(*(volatile uint32_t*) (RCC+RCC_APB2_ENR_offset))
 #define EXTI_PR			(*(volatile uint32_t*) (EXTI + EXTI_PR_offset))
 
-// define Timer
 
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
@@ -89,6 +100,24 @@ void EXTI15_10_IRQHandler(void) {
 		EXTI_PR = (1U <<13);
 		press_counter = (press_counter + 1) % 3;
 	}
+}
+
+void GPIO_A_setup(void) {
+
+	//set up GPIO_A pin for LED
+	GPIO_A_MODER &= ~(3U<<10);
+	GPIO_A_MODER |= (1U<<10);
+}
+
+void GPIO_B_setup(void) {
+
+	// set up GPIO pin for timer
+	GPIO_B_MODER &= ~(3U<<30);
+	GPIO_B_MODER |= (2U<<30);
+
+	// set up AF mode
+	GPIO_B_AFRH &= ~(0xFU<<28);
+	GPIO_B_AFRH |= ~(0x9U<<28);
 }
 
 void GPIO_C_setup(void) {
@@ -110,12 +139,7 @@ void RCC_setup(void) {
 	RCC_APB2_EN |= (1U << 14);
 }
 
-void GPIO_A_setup(void) {
 
-	//set up GPIO_A pin for LED
-	GPIO_A_MODER &= ~(3U<<10);
-	GPIO_A_MODER |= (1U<<10);
-}
 
 void setup_NVIC_EXTI(void) {
 	// configure EXTI line
@@ -130,14 +154,29 @@ void setup_NVIC_EXTI(void) {
 	NVIC_ISER_1 |= (1U << 8);
 }
 
+void TIM12_setup(void) {
+	// setup the control register
+	TIM12_CR1 &= ~(0x1U<<7);
+	TIM12_CR1 |= (0x1U<<7);
+
+	// set up the DIER
+	TIM12_DIER &= ~(0x1U << 0);
+	TIM12_DIER |= (0x1U << 0);
+	// we need to read from TIM12_SR to get update interrupt event
+	TIM12_PSC = 45000 - 1;
+	TIM12_ARR = 1000 - 1;
+}
+
 int main(void)
 {
 	// begin setup
 	RCC_setup();
 	// resetting BR5 register
 	GPIO_A_setup();
+	GPIO_B_setup();
 	GPIO_C_setup();
 	setup_NVIC_EXTI();
+	TIM12_setup();
 
 
     /* Loop forever */

@@ -43,8 +43,9 @@
 #define EXTI_RTSR_offset 	0x08
 #define EXTI_FTSR_offset 	0x0C
 #define NVIC_ISER_1_offset	(0x100 + 0x04)
+#define NVIC_ISPR_1_offset	(0x200 + 0x04)
+#define NVIC_ICPR_1_offset	(0x280 + 0x04)
 #define EXTI_PR_offset		0x14
-
 
 // define timer offsets
 #define TIM12_CR1_offset	0x00
@@ -82,6 +83,11 @@
 #define EXTI_FTSR		(*(volatile uint32_t*) (EXTI + EXTI_FTSR_offset))
 #define NVIC_ISER_1		(*(volatile uint32_t*) (NVIC_ISER_0 + NVIC_ISER_1_offset))
 
+// define NVIC for TIM12
+#define NVIC_ISPR_1		(*(volatile uint32_t*) (NVIC_ISER_0 + NVIC_ISPR_1_offset))
+#define NVIC_ICPR_1		(*(volatile uint32_t*) (NVIC_ISER_0 + NVIC_ICPR_1_offset))
+
+
 // define RCC
 #define RCC_AHB1_EN 	(*(volatile uint32_t*) (RCC+RCC_AHB1_ENR_offset))
 #define RCC_APB2_EN 	(*(volatile uint32_t*) (RCC+RCC_APB2_ENR_offset))
@@ -94,11 +100,27 @@
 #endif
 
 volatile uint32_t press_counter = 0;
+volatile uint32_t timer_counter = 0;
 
 void EXTI15_10_IRQHandler(void) {
 	if (EXTI_PR & (1U << 13)) {
 		EXTI_PR = (1U <<13);
 		press_counter = (press_counter + 1) % 3;
+	}
+}
+
+void toggle_LD2(void) {
+
+}
+
+void TIM8_BRK_TIM12_IRQHandler(void){
+	if (NVIC_ISPR_1 & (1U << 11)) {
+		timer_counter = (timer_counter + 1) % 3;
+
+		if (timer_counter == 999) {
+
+		}
+
 	}
 }
 
@@ -117,7 +139,7 @@ void GPIO_B_setup(void) {
 
 	// set up AF mode
 	GPIO_B_AFRH &= ~(0xFU<<28);
-	GPIO_B_AFRH |= ~(0x9U<<28);
+	GPIO_B_AFRH |= (0x9U<<28);
 }
 
 void GPIO_C_setup(void) {
@@ -156,8 +178,8 @@ void setup_NVIC_EXTI(void) {
 
 void TIM12_setup(void) {
 	// setup the control register
-	TIM12_CR1 &= ~(0x1U<<7);
-	TIM12_CR1 |= (0x1U<<7);
+	TIM12_CR1 &= ~(0x1U << 7);
+	TIM12_CR1 |= (0x1U << 7);
 
 	// set up the DIER
 	TIM12_DIER &= ~(0x1U << 0);
@@ -165,6 +187,10 @@ void TIM12_setup(void) {
 	// we need to read from TIM12_SR to get update interrupt event
 	TIM12_PSC = 45000 - 1;
 	TIM12_ARR = 1000 - 1;
+}
+
+void setup_NVIC_TIM12(void) {
+	NVIC_ISER_1 |= (0x1 << 11);
 }
 
 int main(void)
